@@ -873,6 +873,8 @@
 ! --- 'wbaro ' = weight for time smoothing of barotropic fields
 ! --- 'btrlfr' = leapfrog barotropic time step (0=F,1=T)
 ! --- 'btrmas' = barotropic is mass conserving (0=F,1=T)
+! --- 'shaved' = shaved (vs partial) cells     (0=F,1=T)
+! ---             (use 'shaved'=0 to recover original partial cells)
 ! --- 'hybraf' = HYBGEN:  Robert-Asselin flag  (0=F,1=T)
 ! ---             (use 'hybraf'=0 to recover pre-2.2.38 behaviour)
 ! --- 'hybrlx' = HYBGEN: inverse relaxation coefficient (time steps)
@@ -920,6 +922,7 @@
       call blkinr(wbaro ,'wbaro ','(a6," =",f10.4," ")')
       call blkinl(btrlfr,'btrlfr')
       call blkinl(btrmas,'btrmas')
+      call blkinl(shaved,'shaved')
       call blkinl(hybraf,'hybraf')
       call blkinr(hybrlx,'hybrlx','(a6," =",f10.4," time steps")')
       call blkinr(hybiso,'hybiso','(a6," =",f10.4," kg/m^3")')
@@ -3088,3 +3091,4 @@
 !> Feb. 2025 - Added cbtidc for adding tidal velocities to bottom speed
 !> Feb. 2025 - Negative cbar to input tidal amplitude flow speed
 !> Feb. 2025 - printout now ok for kdm<1000 and idm,jdm<100,000
+!> Feb. 2025 - added shaved

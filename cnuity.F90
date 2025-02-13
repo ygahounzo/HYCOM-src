@@ -119,8 +119,8 @@
 ! ---       use dp, rather than dp'
             onetamas(i,j,:) = oneta(i,j,:)
             if (SEA_U) then
-! ---         depthu is either pbot(i,j) or pbot(i-1,j)
-              if     (pbot(i,j).eq.pbot(i-1,j)) then
+! ---         partial depthu is either pbot(i,j) or pbot(i-1,j)
+              if     (shaved .or. pbot(i,j).eq.pbot(i-1,j)) then
                 oneta_u(i,j) = 0.5*(onetamas(i,j,m)+onetamas(i-1,j,m))
               elseif (pbot(i,j).eq.depthu(i,j)) then
                 oneta_u(i,j) =      onetamas(i,j,m)
@@ -129,8 +129,8 @@
               endif
             endif !iu
             if (SEA_V) then
-! ---         depthv is either pbot(i,j) or pbot(i,j-1)
-              if     (pbot(i,j).eq.pbot(i,j-1)) then
+! ---         partial depthv is either pbot(i,j) or pbot(i,j-1)
+              if     (shaved .or. pbot(i,j).eq.pbot(i,j-1)) then
                 oneta_v(i,j) = 0.5*(onetamas(i,j,m)+onetamas(i,j-1,m))
               elseif (pbot(i,j).eq.depthv(i,j)) then
                 oneta_v(i,j) =      onetamas(i,j,m)
@@ -1450,3 +1450,4 @@
 !> Nov. 2018 - added oneta_u and oneta_v to correct and simplify logic
 !> Mar. 2023 - neg. dp in loop 19 is not fatal, might be corrected in loop 15
 !> Feb. 2025 - printout now ok for kdm<1000 and idm,jdm<100,000
+!> Feb. 2025 - added shaved cell option

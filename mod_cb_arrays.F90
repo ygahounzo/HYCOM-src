@@ -306,6 +306,7 @@
 ! ---  s w i t c h e s    (if set to .true., then...)
 ! --- btrlfr      leapfrog barotropic time step
 ! --- btrmas      barotropic is mass conserving
+! --- shaved      shaved (vs partial) cells
 ! --- diagno      output model fields and diagnostic messages
 ! --- thermo      use thermodynamic forcing (flxflg>0)
 ! --- windf       use wind stress   forcing (wndflg>0)
@@ -355,7 +356,7 @@
 ! --- arcend      always write a 3-d archive at the end of the run
 !
       logical, save :: &
-                    btrlfr,btrmas,diagno,thermo,windf,mslprf, &
+                    btrlfr,btrmas,shaved,diagno,thermo,windf,mslprf, &
                     pcipf,priver,rivera,kparan,lbmont, &
                     relax,srelax,trelax,trcrlx,relaxf,relaxs,relaxt, &
                     locsig,vsigma,hybrid,isopyc,icegln,hybraf,isopcm, &
@@ -1925,3 +1926,4 @@
 !> Jan. 2025 - converted displd_mn and dispqd_mn to surface tracers
 !> Jan. 2025 - removed tidepg_mn
 !> Jan. 2025 - moved salfac to mod_tides
+!> Feb. 2025 - added shaved cell option

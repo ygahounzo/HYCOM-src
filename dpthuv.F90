@@ -79,7 +79,12 @@
             endif
           endif
           do i=max(1-margin,ifu(j,l)),min(ii+margin,ilu(j,l))
-            depthu(i,j)=uvdep(pbot(i,j),pbot(i-1,j))
+            !depthu(i,j)=uvdep(pbot(i,j),pbot(i-1,j))
+            if     (.not.shaved) then
+              depthu(i,j)= uvdep(pbot(i,j),pbot(i-1,j)) !partial cells
+            else
+              depthu(i,j)=0.5*(pbot(i,j)+pbot(i-1,j)) !shaved cells
+            endif
             pvtrop(i,j  )=corio(i,j  )*2./(pbot(i,j)+pbot(i-1,j))
             pvtrop(i,j+1)=corio(i,j+1)*2./(pbot(i,j)+pbot(i-1,j))
           enddo
@@ -106,7 +111,12 @@
             endif
           endif
           do j=max(1-margin,jfv(i,l)),min(jj+margin,jlv(i,l))
-            depthv(i,j)=uvdep(pbot(i,j),pbot(i,j-1))
+            !depthv(i,j)=uvdep(pbot(i,j),pbot(i,j-1))
+            if     (.not.shaved) then
+              depthv(i,j)= uvdep(pbot(i,j),pbot(i,j-1)) !partial cells
+            else
+              depthv(i,j)=0.5*(pbot(i,j)+pbot(i,j-1)) !shaved cells
+            endif
             pvtrop(i  ,j)=corio(i  ,j)*2./(pbot(i,j)+pbot(i,j-1))
             pvtrop(i+1,j)=corio(i+1,j)*2./(pbot(i,j)+pbot(i,j-1))
           enddo
@@ -132,3 +142,4 @@
       end subroutine dpthuv
 !> May  2014 -- use land/sea masks (e.g. iq) to skip land
 !> May  2014 -- removed lbflag==6 for latbdtc
+!> Feb. 2025 -- added shaved cell option
