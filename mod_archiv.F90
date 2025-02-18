@@ -124,7 +124,7 @@
       endif
       ldot = min(ldot,len(flnmarcvs)-11)  !need 11 characters for archive date
 !
-      if     (dsurfq.ge.1.0/24.0) then
+      if     (dsurfq.ge.1.0/24.0 .or. diagfq.ge.1.0/24.0) then
 ! ---   indicate the archive date
         write(flnmarcvs(ldot+1:ldot+11),'(i4.4,a1,i3.3,a1,i2.2)')  &
          iyear,'_',iday,'_',ihour
