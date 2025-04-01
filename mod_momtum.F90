@@ -1253,7 +1253,8 @@
       endif
 !
       dpthin  = 0.001*onemm
-      h1      =       tenm  !used in lateral weighting of hor.pres.grad.
+      !h1      =       tenm  !used in lateral weighting of hor.pres.grad.
+      h1      =   0.5*onem  !used in lateral weighting of hor.pres.grad.
       cutoff  =   0.5*onem
       qcutoff = 1.0/cutoff
 !
