@@ -1,0 +1,43 @@
+#
+# ---------------------------------------------------------------------
+# common definitions for Intel Linux/IFC version 8+, MPI, real*8
+# IFC version 8 has -convert big_endian, and does not need -DENDIAN_IO
+# ---------------------------------------------------------------------
+#
+# MACROS      DESCRIPTIONS:
+#
+# FC:         Fortran 90 compiler.
+# FCFFLAGS:   Fortran 90 compilation flags.
+# CC:         C compiler.
+# CCFLAGS:    C compilation flags.
+# CPP:        cpp preprocessor (may be implied by FC).
+# CPPFLAGS:   cpp -D macro flags.
+# LD:         Loader.
+# LDFLAGS:    Loader flags.
+# EXTRALIBS:  Extra local libraries (if any).
+#
+FC            = /opt/rcc/intel/openmpi/bin/mpif90 
+FCFFLAGS      = -traceback -march=core-avx2 -O3 -fp-model precise -no-fma -ftz -align array64byte -r8 -warn nogeneral -diag-disable 10212 -mcmodel=small 
+CC            = icc
+CCFLAGS       = -traceback -O -mcmodel=small 
+CPP           = cpp -P 
+CPPFLAGS      = -DREAL8 -DMPI -DENDIAN_IO -DNAN2003 -DTIMER -DRELO $(CPP_EXTRAS) 
+LD            = $(FC)
+LDFLAGS       = -V $(FCFFLAGS) 
+EXTRALIBS     = -lmpi
+
+#
+# --- generic make definitions
+#
+SHELL         = /bin/sh
+RM            = \rm -f
+
+#
+# rules.
+#
+
+.c.o:
+	$(CC) $(CPPFLAGS) $(CCFLAGS)  -c $*.c
+
+.F90.o:
+	$(FC) $(CPPFLAGS) $(FCFFLAGS) -c $*.F90

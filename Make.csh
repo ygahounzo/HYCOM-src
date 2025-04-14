@@ -10,17 +10,26 @@ cd $cwd
 #
 # --- set ARCH to the correct value for this machine.
 #
+# --- Generic, GNU Fortran
+#setenv ARCH generic-gnu-relo
+#
+# --- IBM iDataPlex, IBM MPI (very old example)
+#unset echo
 #module swap compiler compiler/intel/12.1.3
 #module swap mpi      mpi/intel/ibmpe
 #module list
+#set echo
 #setenv ARCH Aintelsse-pe-sm-relo
 #
+# --- IBM iDataPlex, Intel MPI (very old example)
+#unset echo
 #module swap compiler compiler/intel/12.1.3
 #module swap mpi      mpi/intel/impi/4.1.3
 #module list
-#setenv ARCH Aintelsse-impi-sm-SD-relo
+#set echo
 #setenv ARCH Aintelsse-impi-sm-relo
 #
+# --- Cray XC30/40, Intel Fortran
 #unset echo
 ##module switch PrgEnv-cray PrgEnv-intel
 #module unload cray-libsci
@@ -30,31 +39,14 @@ cd $cwd
 #module list
 #set echo
 #setenv ARCH xc40-intel-relo
-# --- HPE SGI, MPI (mpt), Intel Fortran  (mpt/2.17 does not work)
-#unset echo
-#module purge
-#module load compiler/intel/2017.4.196
-#module load mpt/2.16
-#module list
-#set echo
-#setenv ARCH hpe-intel-relo
-# --- HPC FSU
-if ( $#argv < 1 ) then
-  echo " "
-  echo " Input: one or mpi"
-  echo " "
-  exit 1
-endif
-unset echo 
-#module load intel13
-#module load openmpi
+#
+# --- Cray SHASTA, Intel Fortran (cray-mpich/8.1.[12] do not work)
+unset echo
 module list
 set echo
-setenv ARCH intelIFC-relo
-
+setenv ARCH intelavx2-openmpi-relo 
 #
-#setenv TYPE `echo $cwd | awk -F"_" '{print $NF}'`
-setenv TYPE $1
+setenv TYPE `echo $cwd | awk -F"_" '{print $NF}'`
 echo "ARCH = " $ARCH "  TYPE = " $TYPE
 #
 if (! -e ./config/${ARCH}_${TYPE}) then
@@ -64,8 +56,8 @@ endif
 
 # CPP flags for compilations
 # Equation Of State
-setenv OCN_SIG  -DEOS_SIG2 ## Sigma-2
-#setenv OCN_SIG -DEOS_SIG0 ## Sigma-0
+#setenv OCN_SIG  -DEOS_SIG2 ## Sigma-2
+setenv OCN_SIG -DEOS_SIG0 ## Sigma-0
 
 setenv OCN_EOS -DEOS_7T  ## EOS  7-term
 #setenv OCN_EOS -DEOS_9T  ## EOS  9-term
@@ -84,7 +76,14 @@ setenv OCN_KAPP ""
 # Miscellaneous CPP flags (-DSTOKES -DOCEANS2 etc...)
 # -DSTOKES  : Stokes drift
 # -DOCEANS2 : master and slave HYCOM in same executable
-setenv OCN_MISC ""
+# -DMOMTUM_CFL     : include an explicit CFL limiter
+# -DMOMTUM4_CFL    : include an explicit CFL limiter
+# -DRDNEST_MASK    : mask velocity outliers
+# -DLATBDT_NPLINE3 : update pline every 3 time steps
+# -DMASSLESS_1MM   : lowest substantial mass-containing layer > 1mm thick
+#setenv OCN_MISC ""
+#setenv OCN_MISC "-DMASSLESS_1MM"
+setenv OCN_MISC "-DMASSLESS_1MM -DMOMTUM_CFL -DRDNEST_MASK -DLATBDT_NPLINE3"
 
 # CPP_EXTRAS
 setenv CPP_EXTRAS "${OCN_SIG} ${OCN_EOS} ${OCN_GLB} ${OCN_KAPP} ${OCN_MISC}"

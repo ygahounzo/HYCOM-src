@@ -759,6 +759,8 @@
           grady( i,j)=0.0
           depthu(i,j)=0.0
           depthv(i,j)=0.0
+          dpthup(i,j)=0.0
+          dpthvp(i,j)=0.0
           pbot(  i,j)=0.0
 !
           psikk( i,j,1)=0.0

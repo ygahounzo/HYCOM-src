@@ -292,22 +292,12 @@
       call blkinr(isotop,'isotop','(a6," =",f10.4," m")')
 !
 ! --- isopycnal (MICOM-like) iff nhybrd is 0
-      isopyc = nhybrd .eq. 0
-      hybrid = .not. isopyc
+      hybrid = nhybrd .gt. 0
       if (hybrid .and. nsigma.le.1) then
         nsigma=1
         if     (dp00.lt.0.0) then
           ds0k(1) = dp0k(1)
         endif
-      endif
-      if (isopyc .and. sigver.gt.2) then
-        if (mnproc.eq.1) then
-        write(lp,'(/ a /)')  &
-          'error - MICOM-like requires the 7-term eqn. of state'
-        call flush(lp)
-        endif !1st tile
-        call xcstop('(blkdat)')
-               stop '(blkdat)'
       endif
 !
       if     (nhybrd.gt.kdm) then
@@ -329,10 +319,10 @@
                stop '(blkdat)'
       endif !error
       if     (dp00.ge.0.0) then
-        if (isopyc .and. max(dp00,dp00x).ne.0.0) then
+        if (.not.hybrid .and. max(dp00,dp00x).ne.0.0) then
           if (mnproc.eq.1) then
           write(lp,'(/ a /)')  &
-            'error - must have dp00x==dp00==0.0 for isopycnal case'
+            'error - must have dp00x==dp00==0.0 for non-hybrid case'
           call flush(lp)
           endif !1st tile
           call xcstop('(blkdat)')
@@ -374,7 +364,7 @@
           call xcstop('(blkdat)')
                  stop '(blkdat)'
         endif !error
-        if (ds00.le.0.0 .and. .not.isopyc) then
+        if (ds00.le.0.0 .and. hybrid) then
           if (mnproc.eq.1) then
           write(lp,'(/ a /)')  &
             'error - must have ds00>0.0'
@@ -410,7 +400,7 @@
           call xcstop('(blkdat)')
                  stop '(blkdat)'
         endif !error
-        if (isotop.eq.0.0) then
+        if (isotop.eq.0.0 .and. hybrid) then
           if (mnproc.eq.1) then
           write(lp,'(/ a /)')  &
             'error - isotop cannot be 0.0 (layer 1 never isopycnal)'
@@ -873,8 +863,6 @@
 ! --- 'wbaro ' = weight for time smoothing of barotropic fields
 ! --- 'btrlfr' = leapfrog barotropic time step (0=F,1=T)
 ! --- 'btrmas' = barotropic is mass conserving (0=F,1=T)
-! --- 'shaved' = shaved (vs partial) cells     (0=F,1=T)
-! ---             (use 'shaved'=0 to recover original partial cells)
 ! --- 'hybraf' = HYBGEN:  Robert-Asselin flag  (0=F,1=T)
 ! ---             (use 'hybraf'=0 to recover pre-2.2.38 behaviour)
 ! --- 'hybrlx' = HYBGEN: inverse relaxation coefficient (time steps)
@@ -892,6 +880,9 @@
 ! --- 'advflg' = thermal  advection flag (0=T&S, 1=th&S,   2=th&T)
 ! --- 'advtyp' = scalar   advection type (0=PCM, 1=MPDATA, 2=FCT2, 4=FCT4)
 ! --- 'momtyp' = momentum advection type (2=2nd; 3=S.QUICK; 4=M.S.QUICK)
+! --- 'shaved' = shaved cell flag (-1,1=partial,-2,2=shaved;-ve=no-sidewall)
+! ---             (use 'shaved'= 1 to recover original partial cells and
+! ---              use 'shaved'=-2 for standard shaved cells)
 ! --- 'slip'   = +1 free-slip, +1<slip<-1 partial, -1 no-slip boundary conditions
 ! --- 'visco2' = deformation-dependent Laplacian  viscosity factor
 ! --- 'visco4' = deformation-dependent biharmonic viscosity factor
@@ -922,7 +913,6 @@
       call blkinr(wbaro ,'wbaro ','(a6," =",f10.4," ")')
       call blkinl(btrlfr,'btrlfr')
       call blkinl(btrmas,'btrmas')
-      call blkinl(shaved,'shaved')
       call blkinl(hybraf,'hybraf')
       call blkinr(hybrlx,'hybrlx','(a6," =",f10.4," time steps")')
       call blkinr(hybiso,'hybiso','(a6," =",f10.4," kg/m^3")')
@@ -933,6 +923,7 @@
       call blkini(advflg,'advflg')
       call blkini(advtyp,'advtyp')
       call blkini(momtyp,'momtyp')
+      call blkini(shaved,'shaved')
       call blkinr(slip,  'slip  ', &
            &'(a6," =",f10.4," (-1=no-slip, -1>:>+1=partial, +1=free)")')
       call blkinr(visco2,'visco2','(a6," =",f10.4," ")')
@@ -1135,15 +1126,7 @@
         call xcstop('(blkdat)')
                stop '(blkdat)'
       endif
-      if (isopyc .and. temdfc.ne.0.0) then
-        if (mnproc.eq.1) then
-        write(lp,'(/ a /)')  &
-         &'error - isopycnal mode must have temdfc=0.0'
-        call flush(lp)
-        endif !1st tile
-        call xcstop('(blkdat)')
-               stop '(blkdat)'
-      endif
+!
       if (temdfc.lt.0.0 .or. temdfc.gt.1.0) then
         if (mnproc.eq.1) then
         write(lp,'(/ a /)')  &
@@ -1501,7 +1484,27 @@
 !
       mxl_no = mlflag.eq.0
 !
-      if (isopyc .and. .not.(mlflag.eq.0 .or. mlflag.eq.2)) then
+      isopyc = nhybrd.eq.0 .and. .not.mxl_no
+!
+      if (isopyc .and. sigver.gt.2) then
+        if (mnproc.eq.1) then
+        write(lp,'(/ a /)')  &
+          'error - MICOM-like requires the 7-term eqn. of state'
+        call flush(lp)
+        endif !1st tile
+        call xcstop('(blkdat)')
+               stop '(blkdat)'
+      endif
+      if (isopyc .and. temdfc.ne.0.0) then
+        if (mnproc.eq.1) then
+        write(lp,'(/ a /)')  &
+         &'error - isopycnal mode must have temdfc=0.0'
+        call flush(lp)
+        endif !1st tile
+        call xcstop('(blkdat)')
+               stop '(blkdat)'
+      endif
+      if (isopyc .and. .not.(mlflag.eq.2)) then
         if (mnproc.eq.1) then
         write(lp,'(/ a /)')  &
          &'error - isopycnal mode requires KT mixed layer (mlflag=2)'
@@ -3091,4 +3094,5 @@
 !> Feb. 2025 - Added cbtidc for adding tidal velocities to bottom speed
 !> Feb. 2025 - Negative cbar to input tidal amplitude flow speed
 !> Feb. 2025 - printout now ok for kdm<1000 and idm,jdm<100,000
-!> Feb. 2025 - added shaved
+!> Mar. 2025 - isopyc identifies MICOM mode, .not.hybrid possible without isopyc
+!> Apr. 2025 - added shaved

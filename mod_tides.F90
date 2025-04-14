@@ -20,7 +20,7 @@
 !
       integer, parameter, public  :: ncon=8  !number of tidal consituents
 !
-      logical, parameter, private :: debug_tides=.false.  !usually .false.
+      logical, parameter, private :: debug_tides=.true.   !usually .false.
 !
       integer, save, public  :: &
        tidflg,    & ! 0:notide,1:bdy.;2:body;3:body&bdy.
@@ -367,7 +367,7 @@
           call tides_dehtide(1, .false.)  !initialise 49-hour filter
         endif !nudging
 !
-        if     (tidstr.eq.0) then
+        if     (tiddrg.ne.0) then
           if     (.not.allocated(uhrly)) then
 ! ---        restart_in did not input [uv]hrly
              allocate(  uhrly(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy,49), &
@@ -386,7 +386,7 @@
              nhrly = 0
           endif  !.not.allocated
           call tides_detide(1, .false.)  !initialise 49-hour filter
-        else  !tidstr.eq.1
+        elseif (tidstr.eq.1) then
           if     (.not.allocated(uvf)) then
 ! ---        restart_in did not input streaming bottom velocity filters
              if     (mnproc.eq.1) then
@@ -407,7 +407,7 @@
              endif !1st tile
              call xcsync(flush_lp)
           endif  !.not.allocated
-        endif !.not.tidstr:else
+        endif !tiddrg:tidstr
       endif !flag.eq.0
 !
       return
@@ -450,7 +450,7 @@
                       -0.4882553,-0.7255653,-0.7325106    , &
                       -0.4786960, 0.0      , 0.0           /
 !
-      if     (tidstr.ne.0) then
+      if     (tiddrg.eq.0 .or. tidstr.ne.0) then
         return  ! streaming filter does not need detided fields
       endif
 !

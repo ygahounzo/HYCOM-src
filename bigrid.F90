@@ -80,7 +80,7 @@
           else
             nreg = 0  ! closed/closed
           endif
-        elseif (nreg.ne. 0) then
+        elseif (nreg.ne.0 .and. .not.lfplane) then
           if (mnproc.eq.1) then
             write(lp,'(/a/)')  &
              'closed   domain, but with nreg.ne.0'

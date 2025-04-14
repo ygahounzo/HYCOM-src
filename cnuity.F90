@@ -83,15 +83,15 @@
                 oneta_u(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy), &
                 oneta_v(1-nbdy:idm+nbdy,1-nbdy:jdm+nbdy) )
         call mem_stat_add( 4*(idm+2*nbdy)*(jdm+2*nbdy) ) !real=2*int
-                  masku = -99
-                  maskv = -99
-                   pold = r_init
-                oneta_u = r_init
-                oneta_v = r_init
+                  masku(:,:) = -99
+                  maskv(:,:) = -99
+                   pold(:,:) = r_init
+                oneta_u(:,:) = r_init
+                oneta_v(:,:) = r_init
         allocate( &
                  dpmn(1-nbdy:jdm+nbdy) )
         call mem_stat_add( jdm+2*nbdy )
-                 dpmn = r_init
+                 dpmn(:) = r_init
       endif
 !
 #endif
@@ -119,24 +119,32 @@
 ! ---       use dp, rather than dp'
             onetamas(i,j,:) = oneta(i,j,:)
             if (SEA_U) then
-! ---         partial depthu is either pbot(i,j) or pbot(i-1,j)
-              if     (shaved .or. pbot(i,j).eq.pbot(i-1,j)) then
+              if     (abs(shaved).eq.2) then !shaved
                 oneta_u(i,j) = 0.5*(onetamas(i,j,m)+onetamas(i-1,j,m))
-              elseif (pbot(i,j).eq.depthu(i,j)) then
-                oneta_u(i,j) =      onetamas(i,j,m)
-              else
-                oneta_u(i,j) =                      onetamas(i-1,j,m)
-              endif
+              else !partial
+! ---           depthu is either pbot(i,j) or pbot(i-1,j)
+                if     (pbot(i,j).eq.pbot(i-1,j)) then
+                  oneta_u(i,j) = 0.5*(onetamas(i,j,m)+onetamas(i-1,j,m))
+                elseif (pbot(i,j).eq.depthu(i,j)) then
+                  oneta_u(i,j) =      onetamas(i,j,m)
+                else
+                  oneta_u(i,j) =                      onetamas(i-1,j,m)
+                endif !pbot
+              endif !shaved:partial
             endif !iu
             if (SEA_V) then
-! ---         partial depthv is either pbot(i,j) or pbot(i,j-1)
-              if     (shaved .or. pbot(i,j).eq.pbot(i,j-1)) then
+              if     (abs(shaved).eq.2) then !shaved
                 oneta_v(i,j) = 0.5*(onetamas(i,j,m)+onetamas(i,j-1,m))
-              elseif (pbot(i,j).eq.depthv(i,j)) then
-                oneta_v(i,j) =      onetamas(i,j,m)
-              else
-                oneta_v(i,j) =                      onetamas(i,j-1,m)
-              endif
+              else !partial
+! ---           depthv is either pbot(i,j) or pbot(i,j-1)
+                if     (pbot(i,j).eq.pbot(i,j-1)) then
+                  oneta_v(i,j) = 0.5*(onetamas(i,j,m)+onetamas(i,j-1,m))
+                elseif (pbot(i,j).eq.depthv(i,j)) then
+                  oneta_v(i,j) =      onetamas(i,j,m)
+                else
+                  oneta_v(i,j) =                      onetamas(i,j-1,m)
+               endif !pbot
+              endif !shaved:partial
             endif !iv
           else
 ! ---       use dp'
@@ -1450,4 +1458,4 @@
 !> Nov. 2018 - added oneta_u and oneta_v to correct and simplify logic
 !> Mar. 2023 - neg. dp in loop 19 is not fatal, might be corrected in loop 15
 !> Feb. 2025 - printout now ok for kdm<1000 and idm,jdm<100,000
-!> Feb. 2025 - added shaved cell option
+!> Apr. 2025 - added shaved cell option

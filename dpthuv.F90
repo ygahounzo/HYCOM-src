@@ -15,10 +15,6 @@
 !
       integer i,j,l,margin
 !
-! --- depth at u,v points
-      real uvdep,a,b
-      uvdep(a,b)=min(a,b)
-!
 ! --- initialize ports.
 !
 #if ! defined(RELO)
@@ -56,7 +52,7 @@
 !
 !
 ! --- rhs: pbot+,corio+
-! --- lhs: depthu, depthv, pvtrop+
+! --- lhs: depthu,dpthup, depthv,dpthvp, pvtrop+
 !
       margin = 1
 !
@@ -66,6 +62,7 @@
           if     (i.ge.1-margin) then
             if     (iuopn(i,j).ne.0) then
               depthu(i,j)=pbot(i  ,j)
+              dpthup(i,j)=pbot(i  ,j)
 !             write(lp,*) 'depthu - i,j,d = ',
 !    &                    i+i0,j+j0,depthu(i,j)*qonem
             endif
@@ -74,14 +71,15 @@
           if     (i.le.ii+margin) then
             if     (iuopn(i,j).ne.0) then
               depthu(i,j)=pbot(i-1,j)
+              dpthup(i,j)=pbot(i-1,j)
 !             write(lp,*) 'depthu - i,j,d = ',
 !    &                    i+i0,j+j0,depthu(i,j)*qonem
             endif
           endif
           do i=max(1-margin,ifu(j,l)),min(ii+margin,ilu(j,l))
-            !depthu(i,j)=uvdep(pbot(i,j),pbot(i-1,j))
-            if     (.not.shaved) then
-              depthu(i,j)= uvdep(pbot(i,j),pbot(i-1,j)) !partial cells
+            dpthup(i,j)= min(pbot(i,j),pbot(i-1,j)) !partial cells
+            if     (abs(shaved).eq.1) then
+              depthu(i,j)=dpthup(i,j) !partial cells
             else
               depthu(i,j)=0.5*(pbot(i,j)+pbot(i-1,j)) !shaved cells
             endif
@@ -98,6 +96,7 @@
           if     (j.ge.1-margin) then
             if     (ivopn(i,j).ne.0) then
               depthv(i,j)=pbot(i,j  )
+              dpthvp(i,j)=pbot(i,j  )
 !             write(lp,*) 'depthv - i,j,d = ',
 !    &                    i+i0,j+j0,depthv(i,j)*qonem
             endif
@@ -106,14 +105,15 @@
           if     (j.le.jj+margin) then
             if     (ivopn(i,j).ne.0) then
               depthv(i,j)=pbot(i,j-1)
+              dpthvp(i,j)=pbot(i,j-1)
 !             write(lp,*) 'depthv - i,j,d = ',
 !    &                    i+i0,j+j0,depthv(i,j)*qonem
             endif
           endif
           do j=max(1-margin,jfv(i,l)),min(jj+margin,jlv(i,l))
-            !depthv(i,j)=uvdep(pbot(i,j),pbot(i,j-1))
-            if     (.not.shaved) then
-              depthv(i,j)= uvdep(pbot(i,j),pbot(i,j-1)) !partial cells
+            dpthvp(i,j)= min(pbot(i,j),pbot(i,j-1)) !partial cells
+            if     (abs(shaved).eq.1) then
+              depthv(i,j)=dpthvp(i,j) !partial cells
             else
               depthv(i,j)=0.5*(pbot(i,j)+pbot(i,j-1)) !shaved cells
             endif
@@ -136,10 +136,13 @@
       enddo !j
 !
       call xctilr(depthu,1,1, nbdy,nbdy, halo_us)
+      call xctilr(dpthup,1,1, nbdy,nbdy, halo_us)
       call xctilr(depthv,1,1, nbdy,nbdy, halo_vs)
+      call xctilr(dpthvp,1,1, nbdy,nbdy, halo_vs)
       call xctilr(pvtrop,1,1, nbdy,nbdy, halo_qs)
       return
       end subroutine dpthuv
 !> May  2014 -- use land/sea masks (e.g. iq) to skip land
 !> May  2014 -- removed lbflag==6 for latbdtc
-!> Feb. 2025 -- added shaved cell option
+!> Apr. 2025 -- added shaved cell option
+!> Apr. 2025 -- added dpthup,dpthvp - used in mod_momtum

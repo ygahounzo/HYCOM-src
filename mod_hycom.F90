@@ -2563,7 +2563,8 @@
            call xctmr1(50)
            call pipe_comparall(m,n, 'trcupd, step')
       endif !trcout
-      if (hybrid) then
+!
+! --- mixed-layer model
          diagsv = diagno
          diagno = diagno .or. nstep.eq.nstep0+1 .or. &
                   histry .or. hisurf .or. hiprof .or. hitile .or. &
@@ -2588,6 +2589,19 @@
             call mxkrtb(m,n)
                call xctmr1(46)
                call pipe_comparall(m,n, 'mxkrtb, step')
+         elseif (mxlkrt) then  !isopyc
+               call xctmr0(46)
+             call mxkrtm(m,n)
+               call xctmr1(46)
+               call pipe_comparall(m,n, 'mxkrtm, step')
+               call xctmr0(47)
+             call convcm(m,n)
+               call xctmr1(47)
+               call pipe_comparall(m,n, 'convcm, step')
+               call xctmr0(48)
+             call diapf3(m,n)
+               call xctmr1(48)
+               call pipe_comparall(m,n, 'diapf3, step')
          else
                call xctmr0(46)
                call xctmr1(46)
@@ -2598,7 +2612,7 @@
                call xctmr1(47)
                call xctmr0(48)
                call xctmr1(48)
-         else  ! mxlpwp has dypflg=2
+         elseif (hybrid) then ! mxlpwp has dypflg=2
                call xctmr0(47)
             call convch(m,n)
                call xctmr1(47)
@@ -2618,6 +2632,7 @@
                  call xctmr1(48)
            endif
         endif !diapycnal mixing
+!
            call xctmr0(54)
         if     (incflg.ne.0 .and. incstp.gt.1) then
         call incupd(n,restrt)
@@ -2631,33 +2646,11 @@
            call xctmr1(56)
            call pipe_comparall(m,n, 'asseln, step')
            call xctmr0(49)
+      if (hybrid) then
         call hybgen(m,n, hybraf)
-           call xctmr1(49)
            call pipe_comparall(m,n, 'hybgen, step')
-      else  ! isopyc
-        if     (mxlkrt) then
-            call xctmr0(46)
-          call mxkrtm(m,n)
-            call xctmr1(46)
-            call pipe_comparall(m,n, 'mxkrtm, step')
-            call xctmr0(47)
-          call convcm(m,n)
-            call xctmr1(47)
-            call pipe_comparall(m,n, 'convcm, step')
-            call xctmr0(48)
-          call diapf3(m,n)
-            call xctmr1(48)
-            call pipe_comparall(m,n, 'diapf3, step')
-            call xctmr0(54)
-            call xctmr1(54)
-        endif  !isopyc mixed layer
-          call xctmr0(56)
-        call asselin_filter(m,n)
-          call xctmr1(56)
-          call pipe_comparall(m,n, 'asseln, step')
-          call xctmr0(49)
-          call xctmr1(49)
-      endif !hybrid:isopyc
+      endif !hybrid:else
+           call xctmr1(49)
 
 #if defined (USE_NUOPC_CESMBETA)
 !!Alex update halo for calculation of  of seas surface slope for CICE (NUOPC)
@@ -3534,6 +3527,29 @@
             endif !1st tile
           endif !NPZ:NPZD
         enddo !ktr
+!
+#if defined(MOMTUM_CFL) || defined(MOMTUM4_CFL)
+!
+! ---   Only report new CFL maximums
+!
+        do k= 1,kk
+          if     (cflclp(k).gt.cflmax(k)) then
+            cflmax(k) = cflclp(k)  !save new maximum
+            if (mnproc.eq.1) then
+            write(lp, '(i9,a, &
+                         &'' L '',i3,'' maxspd,clip (m/s):'',2f10.4)') &
+                nstep,c_ydh, &
+                k,cflspd(k),cflclp(k)
+            call flush(lp)
+            write(nod,'(i9,a, &
+                         &'' L '',i3,'' maxspd,clip (m/s):'',2f10.4)') &
+                nstep,c_ydh, &
+                k,cflspd(k),cflclp(k)
+            call flush(nod)
+            endif !1st tile
+          endif !report
+        enddo !k
+#endif  /* CFL */
       endif  !diagno ...
 !
 ! --- diagnose meridional overturning and heat flux
@@ -4142,3 +4158,4 @@
 !> Jan. 2025 - call overtn only at the end of one month or shorter runs
 !> Feb. 2025 - tidflg==-1 adds tidal velocities to bottom speed
 !> Feb. 2025 - printout now ok for kdm<1000 and idm,jdm<100,000
+!> Mar. 2025 - Allow .not.hybrid without isopyc
